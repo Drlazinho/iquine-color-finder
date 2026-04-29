@@ -124,7 +124,7 @@ function QuizPlayer() {
               selected ? "bg-iquine-red text-white hover:bg-iquine-red-dark" : "bg-white/20 text-white/60",
             )}
           >
-            PRÓXIMO
+            {step + 1 === total ? "CONTINUAR" : "PRÓXIMO"}
           </button>
           <button onClick={back} className="flex w-full items-center justify-center gap-1 text-sm text-white/70 hover:text-white">
             <ChevronLeft className="h-4 w-4" /> Voltar
