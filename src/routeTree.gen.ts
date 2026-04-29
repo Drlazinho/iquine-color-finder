@@ -10,33 +10,101 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminIndexRouteImport } from './routes/admin.index'
+import { Route as QuizFlowIdRouteImport } from './routes/quiz.$flowId'
+import { Route as QuizFlowIdResultRouteImport } from './routes/quiz.$flowId.result'
+import { Route as AdminFlowNewRouteImport } from './routes/admin.flow.new'
+import { Route as AdminFlowFlowIdEditRouteImport } from './routes/admin.flow.$flowId.edit'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/admin/',
+  path: '/admin/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const QuizFlowIdRoute = QuizFlowIdRouteImport.update({
+  id: '/quiz/$flowId',
+  path: '/quiz/$flowId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const QuizFlowIdResultRoute = QuizFlowIdResultRouteImport.update({
+  id: '/result',
+  path: '/result',
+  getParentRoute: () => QuizFlowIdRoute,
+} as any)
+const AdminFlowNewRoute = AdminFlowNewRouteImport.update({
+  id: '/admin/flow/new',
+  path: '/admin/flow/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminFlowFlowIdEditRoute = AdminFlowFlowIdEditRouteImport.update({
+  id: '/admin/flow/$flowId/edit',
+  path: '/admin/flow/$flowId/edit',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/quiz/$flowId': typeof QuizFlowIdRouteWithChildren
+  '/admin/': typeof AdminIndexRoute
+  '/admin/flow/new': typeof AdminFlowNewRoute
+  '/quiz/$flowId/result': typeof QuizFlowIdResultRoute
+  '/admin/flow/$flowId/edit': typeof AdminFlowFlowIdEditRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/quiz/$flowId': typeof QuizFlowIdRouteWithChildren
+  '/admin': typeof AdminIndexRoute
+  '/admin/flow/new': typeof AdminFlowNewRoute
+  '/quiz/$flowId/result': typeof QuizFlowIdResultRoute
+  '/admin/flow/$flowId/edit': typeof AdminFlowFlowIdEditRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/quiz/$flowId': typeof QuizFlowIdRouteWithChildren
+  '/admin/': typeof AdminIndexRoute
+  '/admin/flow/new': typeof AdminFlowNewRoute
+  '/quiz/$flowId/result': typeof QuizFlowIdResultRoute
+  '/admin/flow/$flowId/edit': typeof AdminFlowFlowIdEditRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/quiz/$flowId'
+    | '/admin/'
+    | '/admin/flow/new'
+    | '/quiz/$flowId/result'
+    | '/admin/flow/$flowId/edit'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/quiz/$flowId'
+    | '/admin'
+    | '/admin/flow/new'
+    | '/quiz/$flowId/result'
+    | '/admin/flow/$flowId/edit'
+  id:
+    | '__root__'
+    | '/'
+    | '/quiz/$flowId'
+    | '/admin/'
+    | '/admin/flow/new'
+    | '/quiz/$flowId/result'
+    | '/admin/flow/$flowId/edit'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  QuizFlowIdRoute: typeof QuizFlowIdRouteWithChildren
+  AdminIndexRoute: typeof AdminIndexRoute
+  AdminFlowNewRoute: typeof AdminFlowNewRoute
+  AdminFlowFlowIdEditRoute: typeof AdminFlowFlowIdEditRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +116,62 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/': {
+      id: '/admin/'
+      path: '/admin'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/quiz/$flowId': {
+      id: '/quiz/$flowId'
+      path: '/quiz/$flowId'
+      fullPath: '/quiz/$flowId'
+      preLoaderRoute: typeof QuizFlowIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/quiz/$flowId/result': {
+      id: '/quiz/$flowId/result'
+      path: '/result'
+      fullPath: '/quiz/$flowId/result'
+      preLoaderRoute: typeof QuizFlowIdResultRouteImport
+      parentRoute: typeof QuizFlowIdRoute
+    }
+    '/admin/flow/new': {
+      id: '/admin/flow/new'
+      path: '/admin/flow/new'
+      fullPath: '/admin/flow/new'
+      preLoaderRoute: typeof AdminFlowNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/flow/$flowId/edit': {
+      id: '/admin/flow/$flowId/edit'
+      path: '/admin/flow/$flowId/edit'
+      fullPath: '/admin/flow/$flowId/edit'
+      preLoaderRoute: typeof AdminFlowFlowIdEditRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
+interface QuizFlowIdRouteChildren {
+  QuizFlowIdResultRoute: typeof QuizFlowIdResultRoute
+}
+
+const QuizFlowIdRouteChildren: QuizFlowIdRouteChildren = {
+  QuizFlowIdResultRoute: QuizFlowIdResultRoute,
+}
+
+const QuizFlowIdRouteWithChildren = QuizFlowIdRoute._addFileChildren(
+  QuizFlowIdRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  QuizFlowIdRoute: QuizFlowIdRouteWithChildren,
+  AdminIndexRoute: AdminIndexRoute,
+  AdminFlowNewRoute: AdminFlowNewRoute,
+  AdminFlowFlowIdEditRoute: AdminFlowFlowIdEditRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

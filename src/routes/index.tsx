@@ -1,26 +1,101 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { useFlows } from "@/hooks/useFlows";
+import { IquineLogo } from "@/components/IquineLogo";
+import { Settings } from "lucide-react";
 
 export const Route = createFileRoute("/")({
-  component: Index,
+  component: Welcome,
+  head: () => ({
+    meta: [
+      { title: "Iquine — Encontre Sua Cor" },
+      { name: "description", content: "Encontre a cor perfeita para o seu ambiente." },
+    ],
+  }),
 });
 
-// IMPORTANT: Replace this placeholder. For sites with multiple pages (About, Services, Contact, etc.),
-// create separate route files (about.tsx, services.tsx, contact.tsx) — don't put all pages in this file.
-function PlaceholderIndex() {
-  return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
-    </div>
-  );
-}
+function Welcome() {
+  const { flows, ready } = useFlows();
+  const navigate = useNavigate();
+  const [name, setName] = useState("");
+  const [selectedFlow, setSelectedFlow] = useState<string>("");
+  const [error, setError] = useState("");
 
-function Index() {
-  return <PlaceholderIndex />;
+  useEffect(() => {
+    if (ready && flows.length === 1) setSelectedFlow(flows[0].id);
+  }, [ready, flows]);
+
+  const start = () => {
+    if (!name.trim()) { setError("Digite seu nome para começar"); return; }
+    if (!selectedFlow) { setError("Selecione um quiz"); return; }
+    sessionStorage.setItem("iquine_user_name", name.trim());
+    navigate({ to: "/quiz/$flowId", params: { flowId: selectedFlow } });
+  };
+
+  return (
+    <main className="relative min-h-screen overflow-hidden bg-iquine-red text-white">
+      <div className="absolute inset-0 opacity-10" style={{
+        backgroundImage: "radial-gradient(circle at 20% 20%, rgba(255,255,255,0.4), transparent 40%), radial-gradient(circle at 80% 80%, rgba(0,0,0,0.4), transparent 40%)",
+      }} />
+
+      <Link to="/admin" className="absolute right-4 top-4 z-10 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-xs backdrop-blur transition hover:bg-white/20">
+        <Settings className="h-3.5 w-3.5" /> Admin
+      </Link>
+
+      <div className="relative mx-auto flex min-h-screen max-w-md flex-col items-center justify-between px-6 py-10">
+        <IquineLogo variant="white" className="mt-2" />
+
+        <div className="flex w-full flex-col items-center gap-8 text-center animate-[fade-in_0.6s_ease-out]">
+          <h1 className="font-serif text-6xl font-bold leading-[0.95] sm:text-7xl">
+            Encontre<br/><em className="not-italic font-light">sua cor</em>
+          </h1>
+          <p className="max-w-xs text-sm text-white/80">
+            Um quiz rápido para descobrir as cores perfeitas para o seu ambiente.
+          </p>
+
+          <div className="w-full space-y-3">
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => { setName(e.target.value); setError(""); }}
+              placeholder="Digite seu nome"
+              className="w-full rounded-full border border-white/30 bg-white/10 px-6 py-4 text-center text-white placeholder:text-white/60 backdrop-blur outline-none focus:border-white"
+            />
+
+            {ready && flows.length > 1 && (
+              <select
+                value={selectedFlow}
+                onChange={(e) => setSelectedFlow(e.target.value)}
+                className="w-full rounded-full border border-white/30 bg-white/10 px-6 py-4 text-center text-white backdrop-blur outline-none focus:border-white"
+              >
+                <option value="" className="text-foreground">Escolha um quiz</option>
+                {flows.map((f) => (
+                  <option key={f.id} value={f.id} className="text-foreground">{f.name}</option>
+                ))}
+              </select>
+            )}
+
+            {ready && flows.length === 0 && (
+              <p className="text-xs text-white/80">
+                Nenhum quiz cadastrado.{" "}
+                <Link to="/admin" className="underline">Crie um no admin</Link>.
+              </p>
+            )}
+
+            {error && <p className="text-xs text-white/90">{error}</p>}
+          </div>
+
+          <button
+            onClick={start}
+            disabled={!ready || flows.length === 0}
+            className="w-full rounded-full bg-white px-8 py-4 font-semibold tracking-wide text-iquine-red transition hover:bg-white/90 disabled:opacity-50"
+          >
+            INICIAR
+          </button>
+        </div>
+
+        <p className="text-[10px] uppercase tracking-[0.3em] text-white/60">Iquine Tintas</p>
+      </div>
+    </main>
+  );
 }
