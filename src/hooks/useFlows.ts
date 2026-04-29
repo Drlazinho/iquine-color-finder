@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { QuizFlow, STORAGE_KEY } from "@/types";
+import { QuizFlow, STORAGE_KEY, isFlowAvailable } from "@/types";
 
 const isBrowser = typeof window !== "undefined";
 
@@ -7,7 +7,10 @@ function readAll(): QuizFlow[] {
   if (!isBrowser) return [];
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as QuizFlow[]) : [];
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as QuizFlow[];
+    // backfill defaults for older records
+    return parsed.map((f) => ({ ...f, isActive: f.isActive ?? false }));
   } catch {
     return [];
   }
@@ -30,10 +33,14 @@ export function useFlows() {
   const refresh = useCallback(() => setFlows(readAll()), []);
 
   const saveFlow = useCallback((flow: QuizFlow) => {
-    const all = readAll();
+    let all = readAll();
     const idx = all.findIndex((f) => f.id === flow.id);
     if (idx >= 0) all[idx] = flow;
     else all.push(flow);
+    // Exclusive activation: only one active flow at a time
+    if (flow.isActive) {
+      all = all.map((f) => (f.id === flow.id ? f : { ...f, isActive: false }));
+    }
     writeAll(all);
     setFlows(all);
   }, []);
@@ -48,7 +55,20 @@ export function useFlows() {
     return readAll().find((f) => f.id === id);
   }, []);
 
-  return { flows, ready, refresh, saveFlow, deleteFlow, getFlow };
+  const setActive = useCallback((id: string, active: boolean) => {
+    const all = readAll().map((f) => {
+      if (f.id === id) return { ...f, isActive: active };
+      return active ? { ...f, isActive: false } : f;
+    });
+    writeAll(all);
+    setFlows(all);
+  }, []);
+
+  const getAvailableFlow = useCallback((): QuizFlow | undefined => {
+    return readAll().find((f) => isFlowAvailable(f));
+  }, []);
+
+  return { flows, ready, refresh, saveFlow, deleteFlow, getFlow, setActive, getAvailableFlow };
 }
 
 export function uid() {
