@@ -20,6 +20,26 @@ export interface QuizFlow {
   createdAt: string;
   questions: QuizQuestion[];
   colorMode: ColorCatalogMode;
+  isActive: boolean;
+  activeFrom?: string; // ISO date (YYYY-MM-DD)
+  activeTo?: string;   // ISO date (YYYY-MM-DD)
 }
 
+export type FlowStatus = "live" | "scheduled" | "expired" | "inactive";
+
 export const STORAGE_KEY = "iquine_flows";
+
+/** Returns the flow's current scheduling status. */
+export function getFlowStatus(flow: QuizFlow, now: Date = new Date()): FlowStatus {
+  if (!flow.isActive) return "inactive";
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const from = flow.activeFrom ? new Date(flow.activeFrom + "T00:00:00").getTime() : undefined;
+  const to = flow.activeTo ? new Date(flow.activeTo + "T23:59:59").getTime() : undefined;
+  if (from !== undefined && today < from) return "scheduled";
+  if (to !== undefined && today > to) return "expired";
+  return "live";
+}
+
+export function isFlowAvailable(flow: QuizFlow, now: Date = new Date()): boolean {
+  return getFlowStatus(flow, now) === "live";
+}

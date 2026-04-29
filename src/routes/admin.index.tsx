@@ -2,14 +2,38 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useFlows } from "@/hooks/useFlows";
 import { IquineLogo } from "@/components/IquineLogo";
 import { Plus, Pencil, Eye, Trash2, Palette, FileText } from "lucide-react";
+import { FlowStatus, getFlowStatus, QuizFlow } from "@/types";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin/")({
   component: AdminDashboard,
   head: () => ({ meta: [{ title: "Admin — Iquine" }] }),
 });
 
+const STATUS_LABEL: Record<FlowStatus, string> = {
+  live: "Ativo agora",
+  scheduled: "Agendado",
+  expired: "Expirado",
+  inactive: "Inativo",
+};
+
+const STATUS_CLASS: Record<FlowStatus, string> = {
+  live: "bg-green-100 text-green-800 border-green-200",
+  scheduled: "bg-blue-100 text-blue-800 border-blue-200",
+  expired: "bg-amber-100 text-amber-800 border-amber-200",
+  inactive: "bg-muted text-muted-foreground border-border",
+};
+
+function formatRange(flow: QuizFlow) {
+  const fmt = (d: string) => new Date(d + "T00:00:00").toLocaleDateString("pt-BR");
+  if (flow.activeFrom && flow.activeTo) return `${fmt(flow.activeFrom)} → ${fmt(flow.activeTo)}`;
+  if (flow.activeFrom) return `A partir de ${fmt(flow.activeFrom)}`;
+  if (flow.activeTo) return `Até ${fmt(flow.activeTo)}`;
+  return "Sem período definido";
+}
+
 function AdminDashboard() {
-  const { flows, ready, deleteFlow } = useFlows();
+  const { flows, ready, deleteFlow, setActive } = useFlows();
   const navigate = useNavigate();
 
   return (
@@ -58,39 +82,68 @@ function AdminDashboard() {
         )}
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {flows.map((flow) => (
-            <article key={flow.id} className="group rounded-2xl border border-border bg-card p-5 shadow-sm transition hover:shadow-md">
-              <div className="flex items-start justify-between">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent">
-                  <FileText className="h-5 w-5 text-iquine-red" />
+          {flows.map((flow) => {
+            const status = getFlowStatus(flow);
+            return (
+              <article key={flow.id} className="group rounded-2xl border border-border bg-card p-5 shadow-sm transition hover:shadow-md">
+                <div className="flex items-start justify-between">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent">
+                    <FileText className="h-5 w-5 text-iquine-red" />
+                  </div>
+                  <span className={cn(
+                    "rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider",
+                    STATUS_CLASS[status],
+                  )}>
+                    {STATUS_LABEL[status]}
+                  </span>
                 </div>
-                <span className="rounded-full bg-secondary px-2.5 py-1 text-[10px] uppercase tracking-wider text-secondary-foreground">
-                  {flow.colorMode.type === "ano" ? "Cores do Ano" : "Catálogo"}
-                </span>
-              </div>
-              <h3 className="mt-4 font-serif text-lg font-semibold leading-tight">{flow.name}</h3>
-              <p className="mt-1 text-xs text-muted-foreground">
-                {flow.questions.length} {flow.questions.length === 1 ? "pergunta" : "perguntas"} · criado em {new Date(flow.createdAt).toLocaleDateString("pt-BR")}
-              </p>
-              <div className="mt-5 flex items-center gap-2 border-t border-border pt-4">
-                <Link to="/admin/flow/$flowId/edit" params={{ flowId: flow.id }}
-                  className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-full bg-secondary px-3 py-2 text-xs font-medium hover:bg-accent">
-                  <Pencil className="h-3.5 w-3.5" /> Editar
-                </Link>
-                <Link to="/quiz/$flowId" params={{ flowId: flow.id }} target="_blank"
-                  className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-full bg-secondary px-3 py-2 text-xs font-medium hover:bg-accent">
-                  <Eye className="h-3.5 w-3.5" /> Visualizar
-                </Link>
-                <button
-                  onClick={() => { if (confirm(`Excluir "${flow.name}"?`)) deleteFlow(flow.id); }}
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                  aria-label="Excluir"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
-              </div>
-            </article>
-          ))}
+                <h3 className="mt-4 font-serif text-lg font-semibold leading-tight">{flow.name}</h3>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {flow.questions.length} {flow.questions.length === 1 ? "pergunta" : "perguntas"} · {flow.colorMode.type === "ano" ? "Cores do Ano" : "Catálogo"}
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">{formatRange(flow)}</p>
+
+                <div className="mt-4 flex items-center justify-between rounded-xl bg-secondary/50 px-3 py-2">
+                  <span className="text-xs font-medium">{flow.isActive ? "Ativado" : "Desativado"}</span>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={flow.isActive}
+                    onClick={() => setActive(flow.id, !flow.isActive)}
+                    className={cn(
+                      "relative h-6 w-11 flex-shrink-0 rounded-full transition",
+                      flow.isActive ? "bg-iquine-red" : "bg-muted-foreground/30",
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all",
+                        flow.isActive ? "left-[22px]" : "left-0.5",
+                      )}
+                    />
+                  </button>
+                </div>
+
+                <div className="mt-4 flex items-center gap-2 border-t border-border pt-4">
+                  <Link to="/admin/flow/$flowId/edit" params={{ flowId: flow.id }}
+                    className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-full bg-secondary px-3 py-2 text-xs font-medium hover:bg-accent">
+                    <Pencil className="h-3.5 w-3.5" /> Editar
+                  </Link>
+                  <Link to="/quiz/$flowId" params={{ flowId: flow.id }} target="_blank"
+                    className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-full bg-secondary px-3 py-2 text-xs font-medium hover:bg-accent">
+                    <Eye className="h-3.5 w-3.5" /> Visualizar
+                  </Link>
+                  <button
+                    onClick={() => { if (confirm(`Excluir "${flow.name}"?`)) deleteFlow(flow.id); }}
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                    aria-label="Excluir"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              </article>
+            );
+          })}
         </div>
       </section>
     </main>

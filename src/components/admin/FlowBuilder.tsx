@@ -23,6 +23,9 @@ export function FlowBuilder({ flowId }: { flowId?: string }) {
   const [colorMode, setColorMode] = useState<ColorCatalogMode>({ type: "ano" });
   const [questions, setQuestions] = useState<QuizQuestion[]>([newQuestion()]);
   const [createdAt, setCreatedAt] = useState<string>("");
+  const [isActive, setIsActive] = useState(false);
+  const [activeFrom, setActiveFrom] = useState<string>("");
+  const [activeTo, setActiveTo] = useState<string>("");
   const [error, setError] = useState("");
   const loaded = useRef(false);
 
@@ -36,6 +39,9 @@ export function FlowBuilder({ flowId }: { flowId?: string }) {
         setColorMode(f.colorMode);
         setQuestions(f.questions);
         setCreatedAt(f.createdAt);
+        setIsActive(f.isActive);
+        setActiveFrom(f.activeFrom || "");
+        setActiveTo(f.activeTo || "");
       }
     }
   }, [ready, flowId, getFlow]);
@@ -91,12 +97,19 @@ export function FlowBuilder({ flowId }: { flowId?: string }) {
   const onSave = () => {
     const err = validate();
     if (err) { setError(err); return; }
+    if (activeFrom && activeTo && activeFrom > activeTo) {
+      setError('A data inicial deve ser anterior à data final.');
+      return;
+    }
     const flow: QuizFlow = {
       id: flowId || uid(),
       name: name.trim(),
       createdAt: createdAt || new Date().toISOString(),
       questions,
       colorMode,
+      isActive,
+      activeFrom: activeFrom || undefined,
+      activeTo: activeTo || undefined,
     };
     saveFlow(flow);
     navigate({ to: "/admin" });
@@ -195,6 +208,64 @@ export function FlowBuilder({ flowId }: { flowId?: string }) {
           >
             <Plus className="h-4 w-4" /> Adicionar Pergunta
           </button>
+        </section>
+
+        {/* Step 3 — Availability */}
+        <section className="rounded-3xl border border-border bg-card p-6 shadow-sm">
+          <div className="mb-5 flex items-center gap-3">
+            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-iquine-red text-sm font-bold text-white">3</span>
+            <h2 className="font-serif text-lg font-semibold">Disponibilidade</h2>
+          </div>
+
+          <div className="flex items-center justify-between rounded-2xl border border-border bg-background p-4">
+            <div>
+              <p className="font-medium">Fluxo ativo</p>
+              <p className="text-xs text-muted-foreground">
+                Apenas um fluxo pode estar ativo por vez. Ativar este desativará os demais.
+              </p>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={isActive}
+              onClick={() => setIsActive((v) => !v)}
+              className={cn(
+                "relative h-7 w-12 flex-shrink-0 rounded-full transition",
+                isActive ? "bg-iquine-red" : "bg-muted",
+              )}
+            >
+              <span
+                className={cn(
+                  "absolute top-0.5 h-6 w-6 rounded-full bg-white shadow transition-all",
+                  isActive ? "left-[22px]" : "left-0.5",
+                )}
+              />
+            </button>
+          </div>
+
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <label className="block">
+              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Disponível a partir de</span>
+              <input
+                type="date"
+                value={activeFrom}
+                onChange={(e) => setActiveFrom(e.target.value)}
+                className="mt-2 w-full rounded-full border border-input bg-background px-5 py-3 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+              />
+            </label>
+            <label className="block">
+              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Disponível até</span>
+              <input
+                type="date"
+                value={activeTo}
+                onChange={(e) => setActiveTo(e.target.value)}
+                className="mt-2 w-full rounded-full border border-input bg-background px-5 py-3 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+              />
+            </label>
+          </div>
+          <p className="mt-3 text-xs text-muted-foreground">
+            Deixe as datas em branco para disponibilidade sem restrição de período.
+          </p>
         </section>
 
         {error && (
