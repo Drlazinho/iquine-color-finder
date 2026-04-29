@@ -23,6 +23,9 @@ export function FlowBuilder({ flowId }: { flowId?: string }) {
   const [colorMode, setColorMode] = useState<ColorCatalogMode>({ type: "ano" });
   const [questions, setQuestions] = useState<QuizQuestion[]>([newQuestion()]);
   const [createdAt, setCreatedAt] = useState<string>("");
+  const [isActive, setIsActive] = useState(false);
+  const [activeFrom, setActiveFrom] = useState<string>("");
+  const [activeTo, setActiveTo] = useState<string>("");
   const [error, setError] = useState("");
   const loaded = useRef(false);
 
@@ -36,6 +39,9 @@ export function FlowBuilder({ flowId }: { flowId?: string }) {
         setColorMode(f.colorMode);
         setQuestions(f.questions);
         setCreatedAt(f.createdAt);
+        setIsActive(f.isActive);
+        setActiveFrom(f.activeFrom || "");
+        setActiveTo(f.activeTo || "");
       }
     }
   }, [ready, flowId, getFlow]);
@@ -91,12 +97,19 @@ export function FlowBuilder({ flowId }: { flowId?: string }) {
   const onSave = () => {
     const err = validate();
     if (err) { setError(err); return; }
+    if (activeFrom && activeTo && activeFrom > activeTo) {
+      setError('A data inicial deve ser anterior à data final.');
+      return;
+    }
     const flow: QuizFlow = {
       id: flowId || uid(),
       name: name.trim(),
       createdAt: createdAt || new Date().toISOString(),
       questions,
       colorMode,
+      isActive,
+      activeFrom: activeFrom || undefined,
+      activeTo: activeTo || undefined,
     };
     saveFlow(flow);
     navigate({ to: "/admin" });
