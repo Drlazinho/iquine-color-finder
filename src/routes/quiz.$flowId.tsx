@@ -46,7 +46,7 @@ function QuizPlayer() {
     if (step + 1 < total) setStep(step + 1);
     else {
       sessionStorage.setItem("iquine_answers", JSON.stringify(answers));
-      navigate({ to: "/quiz/$flowId/result", params: { flowId } });
+      navigate({ to: "/quiz/$flowId/contact", params: { flowId } });
     }
   };
 
