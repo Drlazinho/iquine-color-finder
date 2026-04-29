@@ -1,8 +1,9 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import { useFlows } from "@/hooks/useFlows";
 import { IquineLogo } from "@/components/IquineLogo";
-import { Settings } from "lucide-react";
+import { Settings, Clock } from "lucide-react";
+import { isFlowAvailable } from "@/types";
 
 export const Route = createFileRoute("/")({
   component: Welcome,
@@ -18,19 +19,44 @@ function Welcome() {
   const { flows, ready } = useFlows();
   const navigate = useNavigate();
   const [name, setName] = useState("");
-  const [selectedFlow, setSelectedFlow] = useState<string>("");
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    if (ready && flows.length === 1) setSelectedFlow(flows[0].id);
-  }, [ready, flows]);
+  const availableFlow = useMemo(
+    () => flows.find((f) => isFlowAvailable(f)),
+    [flows],
+  );
 
   const start = () => {
     if (!name.trim()) { setError("Digite seu nome para começar"); return; }
-    if (!selectedFlow) { setError("Selecione um quiz"); return; }
+    if (!availableFlow) return;
     sessionStorage.setItem("iquine_user_name", name.trim());
-    navigate({ to: "/quiz/$flowId", params: { flowId: selectedFlow } });
+    navigate({ to: "/quiz/$flowId", params: { flowId: availableFlow.id } });
   };
+
+  // Unavailable screen
+  if (ready && !availableFlow) {
+    return (
+      <main className="relative min-h-screen overflow-hidden bg-iquine-red text-white">
+        <Link to="/admin" className="absolute right-4 top-4 z-10 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-xs backdrop-blur transition hover:bg-white/20">
+          <Settings className="h-3.5 w-3.5" /> Admin
+        </Link>
+        <div className="relative mx-auto flex min-h-screen max-w-md flex-col items-center justify-center gap-6 px-6 py-10 text-center">
+          <IquineLogo variant="white" />
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/10 backdrop-blur">
+            <Clock className="h-7 w-7" />
+          </div>
+          <h1 className="font-serif text-4xl font-bold leading-tight sm:text-5xl">
+            Quiz indisponível<br/>
+            <em className="not-italic font-light">no momento</em>
+          </h1>
+          <p className="max-w-xs text-sm text-white/80">
+            Nenhum quiz está disponível agora. Volte em breve para descobrir as cores perfeitas para o seu ambiente.
+          </p>
+          <p className="mt-4 text-[10px] uppercase tracking-[0.3em] text-white/60">Iquine Tintas</p>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-iquine-red text-white">
@@ -58,36 +84,16 @@ function Welcome() {
               type="text"
               value={name}
               onChange={(e) => { setName(e.target.value); setError(""); }}
+              onKeyDown={(e) => { if (e.key === "Enter") start(); }}
               placeholder="Digite seu nome"
               className="w-full rounded-full border border-white/30 bg-white/10 px-6 py-4 text-center text-white placeholder:text-white/60 backdrop-blur outline-none focus:border-white"
             />
-
-            {ready && flows.length > 1 && (
-              <select
-                value={selectedFlow}
-                onChange={(e) => setSelectedFlow(e.target.value)}
-                className="w-full rounded-full border border-white/30 bg-white/10 px-6 py-4 text-center text-white backdrop-blur outline-none focus:border-white"
-              >
-                <option value="" className="text-foreground">Escolha um quiz</option>
-                {flows.map((f) => (
-                  <option key={f.id} value={f.id} className="text-foreground">{f.name}</option>
-                ))}
-              </select>
-            )}
-
-            {ready && flows.length === 0 && (
-              <p className="text-xs text-white/80">
-                Nenhum quiz cadastrado.{" "}
-                <Link to="/admin" className="underline">Crie um no admin</Link>.
-              </p>
-            )}
-
             {error && <p className="text-xs text-white/90">{error}</p>}
           </div>
 
           <button
             onClick={start}
-            disabled={!ready || flows.length === 0}
+            disabled={!ready || !availableFlow}
             className="w-full rounded-full bg-white px-8 py-4 font-semibold tracking-wide text-iquine-red transition hover:bg-white/90 disabled:opacity-50"
           >
             INICIAR
