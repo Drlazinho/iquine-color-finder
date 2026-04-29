@@ -1,14 +1,20 @@
-@import "tailwindcss" source(none);
-@source "../src";
+/* 1. Imports de fontes sempre no topo */
+@import url('https://fonts.googleapis.com/css2?family=Sans+serif:wght@400;500;600;700;800;900&family=DM+Sans:wght@400;500;600;700&display=swap');
+
+/* 2. Import do Tailwind v4 */
+@import "tailwindcss";
+
+/* 3. Import de plugins (verifique se este caminho está correto no seu projeto) */
 @import "tw-animate-css";
 
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800;900&family=DM+Sans:wght@400;500;600;700&display=swap');
-
+/* 4. Configuração de origem e variantes */
+@source "../src";
 @custom-variant dark (&:is(.dark *));
 
-@theme inline {
-  --font-serif: 'Playfair Display', Georgia, serif;
-  --font-sans: 'DM Sans', system-ui, sans-serif;
+/* 5. Definição do Tema (Removido o 'inline') */
+@theme {
+  --font-serif: 'Sans serif', Georgia, serif;
+  --font-sans: 'Sans serif', system-ui, sans-serif;
 
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -62,17 +68,16 @@
   }
 }
 
+/* 6. Variáveis nativas do CSS */
 :root {
   --radius: 0.75rem;
 
-  /* Iquine brand */
-  --iquine-red: #FF0014;          /* #E3000F */
+  --iquine-red: #FF0014;
   --iquine-red-dark: oklch(0.46 0.215 25);
-  --iquine-taupe: oklch(0.55 0.035 65);        /* #8B7355 */
-  --iquine-charcoal: oklch(0.27 0.005 280);    /* #2C2C2C */
-  --iquine-cream: oklch(0.975 0.005 80);       /* #F8F7F5 */
+  --iquine-taupe: oklch(0.55 0.035 65);
+  --iquine-charcoal: oklch(0.27 0.005 280);
+  --iquine-cream: oklch(0.975 0.005 80);
 
-  /* Admin (light) theme */
   --background: oklch(0.975 0.005 80);
   --foreground: oklch(0.2 0.01 60);
   --card: oklch(1 0 0);
@@ -94,6 +99,7 @@
   --ring: var(--iquine-red);
 }
 
+/* 7. Estilos de base */
 @layer base {
   * { border-color: var(--color-border); }
   body {
