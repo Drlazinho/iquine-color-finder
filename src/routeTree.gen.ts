@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as QuizFlowIdRouteImport } from './routes/quiz.$flowId'
+import { Route as QuizFlowIdIndexRouteImport } from './routes/quiz.$flowId.index'
 import { Route as QuizFlowIdResultRouteImport } from './routes/quiz.$flowId.result'
 import { Route as QuizFlowIdContactRouteImport } from './routes/quiz.$flowId.contact'
 import { Route as AdminFlowNewRouteImport } from './routes/admin.flow.new'
@@ -31,6 +32,11 @@ const QuizFlowIdRoute = QuizFlowIdRouteImport.update({
   id: '/quiz/$flowId',
   path: '/quiz/$flowId',
   getParentRoute: () => rootRouteImport,
+} as any)
+const QuizFlowIdIndexRoute = QuizFlowIdIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => QuizFlowIdRoute,
 } as any)
 const QuizFlowIdResultRoute = QuizFlowIdResultRouteImport.update({
   id: '/result',
@@ -60,15 +66,16 @@ export interface FileRoutesByFullPath {
   '/admin/flow/new': typeof AdminFlowNewRoute
   '/quiz/$flowId/contact': typeof QuizFlowIdContactRoute
   '/quiz/$flowId/result': typeof QuizFlowIdResultRoute
+  '/quiz/$flowId/': typeof QuizFlowIdIndexRoute
   '/admin/flow/$flowId/edit': typeof AdminFlowFlowIdEditRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/quiz/$flowId': typeof QuizFlowIdRouteWithChildren
   '/admin': typeof AdminIndexRoute
   '/admin/flow/new': typeof AdminFlowNewRoute
   '/quiz/$flowId/contact': typeof QuizFlowIdContactRoute
   '/quiz/$flowId/result': typeof QuizFlowIdResultRoute
+  '/quiz/$flowId': typeof QuizFlowIdIndexRoute
   '/admin/flow/$flowId/edit': typeof AdminFlowFlowIdEditRoute
 }
 export interface FileRoutesById {
@@ -79,6 +86,7 @@ export interface FileRoutesById {
   '/admin/flow/new': typeof AdminFlowNewRoute
   '/quiz/$flowId/contact': typeof QuizFlowIdContactRoute
   '/quiz/$flowId/result': typeof QuizFlowIdResultRoute
+  '/quiz/$flowId/': typeof QuizFlowIdIndexRoute
   '/admin/flow/$flowId/edit': typeof AdminFlowFlowIdEditRoute
 }
 export interface FileRouteTypes {
@@ -90,15 +98,16 @@ export interface FileRouteTypes {
     | '/admin/flow/new'
     | '/quiz/$flowId/contact'
     | '/quiz/$flowId/result'
+    | '/quiz/$flowId/'
     | '/admin/flow/$flowId/edit'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/quiz/$flowId'
     | '/admin'
     | '/admin/flow/new'
     | '/quiz/$flowId/contact'
     | '/quiz/$flowId/result'
+    | '/quiz/$flowId'
     | '/admin/flow/$flowId/edit'
   id:
     | '__root__'
@@ -108,6 +117,7 @@ export interface FileRouteTypes {
     | '/admin/flow/new'
     | '/quiz/$flowId/contact'
     | '/quiz/$flowId/result'
+    | '/quiz/$flowId/'
     | '/admin/flow/$flowId/edit'
   fileRoutesById: FileRoutesById
 }
@@ -141,6 +151,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/quiz/$flowId'
       preLoaderRoute: typeof QuizFlowIdRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/quiz/$flowId/': {
+      id: '/quiz/$flowId/'
+      path: '/'
+      fullPath: '/quiz/$flowId/'
+      preLoaderRoute: typeof QuizFlowIdIndexRouteImport
+      parentRoute: typeof QuizFlowIdRoute
     }
     '/quiz/$flowId/result': {
       id: '/quiz/$flowId/result'
@@ -176,11 +193,13 @@ declare module '@tanstack/react-router' {
 interface QuizFlowIdRouteChildren {
   QuizFlowIdContactRoute: typeof QuizFlowIdContactRoute
   QuizFlowIdResultRoute: typeof QuizFlowIdResultRoute
+  QuizFlowIdIndexRoute: typeof QuizFlowIdIndexRoute
 }
 
 const QuizFlowIdRouteChildren: QuizFlowIdRouteChildren = {
   QuizFlowIdContactRoute: QuizFlowIdContactRoute,
   QuizFlowIdResultRoute: QuizFlowIdResultRoute,
+  QuizFlowIdIndexRoute: QuizFlowIdIndexRoute,
 }
 
 const QuizFlowIdRouteWithChildren = QuizFlowIdRoute._addFileChildren(

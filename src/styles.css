@@ -66,7 +66,7 @@
   --radius: 0.75rem;
 
   /* Iquine brand */
-  --iquine-red: oklch(0.55 0.235 25);          /* #E3000F */
+  --iquine-red: #FF0014;          /* #E3000F */
   --iquine-red-dark: oklch(0.46 0.215 25);
   --iquine-taupe: oklch(0.55 0.035 65);        /* #8B7355 */
   --iquine-charcoal: oklch(0.27 0.005 280);    /* #2C2C2C */

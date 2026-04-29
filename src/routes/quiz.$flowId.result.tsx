@@ -22,13 +22,9 @@ const COLOR_POOL = [
   { name: "Carvão Elegante", hex: "#3A3A3A" },
 ];
 
-// Hash determinístico simples — mesmas respostas → mesma cor
-function pickColor(seed: string) {
-  let h = 0;
-  for (let i = 0; i < seed.length; i++) {
-    h = (h * 31 + seed.charCodeAt(i)) >>> 0;
-  }
-  return COLOR_POOL[h % COLOR_POOL.length];
+// Cor aleatória — cada vez que o resultado é exibido, uma cor diferente é sorteada
+function randomColor() {
+  return COLOR_POOL[Math.floor(Math.random() * COLOR_POOL.length)];
 }
 
 function Result() {
@@ -36,18 +32,10 @@ function Result() {
   const { getFlow, ready } = useFlows();
   const flow = useMemo(() => (ready ? getFlow(flowId) : undefined), [ready, flowId, getFlow]);
   const [name, setName] = useState("");
-  const [color, setColor] = useState(COLOR_POOL[0]);
+  const [color, setColor] = useState(() => randomColor());
 
   useEffect(() => {
     setName(sessionStorage.getItem("iquine_user_name") || "");
-    const raw = sessionStorage.getItem("iquine_answers") || "{}";
-    let seed = raw;
-    try {
-      const obj = JSON.parse(raw) as Record<string, string>;
-      seed = Object.keys(obj).sort().map((k) => `${k}:${obj[k]}`).join("|");
-    } catch { /* ignore */ }
-    if (!seed) seed = Math.random().toString();
-    setColor(pickColor(seed));
   }, []);
 
   const modeLabel = flow?.colorMode.type === "ano" ? "Cores do Ano" : "Todas as Cores do Catálogo";

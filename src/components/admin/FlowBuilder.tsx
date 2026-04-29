@@ -120,7 +120,7 @@ export function FlowBuilder({ flowId }: { flowId?: string }) {
       <header className="border-b border-border bg-card">
         <div className="mx-auto flex max-w-4xl items-center justify-between px-6 py-5">
           <div className="flex items-center gap-4">
-            <IquineLogo variant="red" />
+            <IquineLogo />
             <div>
               <h1 className="font-serif text-xl font-bold">{flowId ? "Editar Fluxo" : "Novo Fluxo"}</h1>
               <p className="text-xs text-muted-foreground">Configure seu quiz de recomendação</p>
@@ -210,10 +210,36 @@ export function FlowBuilder({ flowId }: { flowId?: string }) {
           </button>
         </section>
 
-        {/* Step 3 — Availability */}
-        <section className="rounded-3xl border border-border bg-card p-6 shadow-sm">
+        {/* Step 3 — Coleta de Dados (sempre incluído) */}
+        {/* <section className="rounded-3xl border border-border bg-card p-6 shadow-sm">
           <div className="mb-5 flex items-center gap-3">
             <span className="flex h-8 w-8 items-center justify-center rounded-full bg-iquine-red text-sm font-bold text-white">3</span>
+            <h2 className="font-serif text-lg font-semibold">Coleta de Dados</h2>
+            <span className="ml-auto rounded-full bg-iquine-red/10 px-3 py-0.5 text-xs font-semibold text-iquine-red">Sempre incluído</span>
+          </div>
+          <p className="mb-4 text-sm text-muted-foreground">
+            Após responder todas as perguntas, o usuário será direcionado automaticamente para preencher seus dados de contato antes de ver o resultado.
+          </p>
+          <div className="grid gap-3 sm:grid-cols-3 opacity-60 pointer-events-none select-none">
+            {[
+              { label: "Telefone", placeholder: "(00) 00000-0000" },
+              { label: "E-mail", placeholder: "seu@email.com" },
+              { label: "CEP", placeholder: "00000-000" },
+            ].map((f) => (
+              <div key={f.label}>
+                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{f.label}</span>
+                <div className="mt-2 w-full rounded-full border border-input bg-background px-5 py-3 text-sm text-muted-foreground">
+                  {f.placeholder}
+                </div>
+              </div>
+            ))}
+          </div>
+        </section> */}
+
+        {/* Step 4 — Availability */}
+        <section className="rounded-3xl border border-border bg-card p-6 shadow-sm">
+          <div className="mb-5 flex items-center gap-3">
+            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-iquine-red text-sm font-bold text-white">4</span>
             <h2 className="font-serif text-lg font-semibold">Disponibilidade</h2>
           </div>
 
