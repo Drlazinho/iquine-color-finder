@@ -10,8 +10,14 @@ export interface QuizQuestion {
   options: QuizOption[];
 }
 
+export interface ColorPalette {
+  id: string;
+  name: string;
+  colors: { id: string; name: string; hex: string }[];
+}
+
 export interface ColorCatalogMode {
-  type: "ano" | "catalogo";
+  type: "ano" | "catalogo" | "custom";
 }
 
 export interface QuizFlow {
@@ -20,6 +26,7 @@ export interface QuizFlow {
   createdAt: string;
   questions: QuizQuestion[];
   colorMode: ColorCatalogMode;
+  customPalette?: ColorPalette;
   isActive: boolean;
   activeFrom?: string; // ISO date (YYYY-MM-DD)
   activeTo?: string;   // ISO date (YYYY-MM-DD)
@@ -28,6 +35,8 @@ export interface QuizFlow {
 export type FlowStatus = "live" | "scheduled" | "expired" | "inactive";
 
 export const STORAGE_KEY = "iquine_flows";
+export const QUESTIONS_STORAGE_KEY = "iquine_questions";
+export const PALETTES_STORAGE_KEY = "iquine_palettes";
 
 /** Returns the flow's current scheduling status. */
 export function getFlowStatus(flow: QuizFlow, now: Date = new Date()): FlowStatus {

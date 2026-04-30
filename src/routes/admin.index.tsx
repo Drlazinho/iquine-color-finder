@@ -1,8 +1,11 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useFlows } from "@/hooks/useFlows";
 import { IquineLogo } from "@/components/IquineLogo";
-import { Plus, Pencil, Eye, Trash2, Palette, FileText } from "lucide-react";
+import { Plus, Pencil, Eye, Trash2, Palette, FileText, HelpCircle, Save } from "lucide-react";
 import { FlowStatus, getFlowStatus, QuizFlow } from "@/types";
+import { useState } from "react";
+import { QuestionBank } from "@/components/admin/QuestionBank";
+import { PaletteBank } from "@/components/admin/PaletteBank";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin/")({
@@ -35,6 +38,7 @@ function formatRange(flow: QuizFlow) {
 function AdminDashboard() {
   const { flows, ready, deleteFlow, setActive } = useFlows();
   const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState<"flows" | "questions" | "palettes">("flows");
 
   return (
     <main className="min-h-screen bg-background">
@@ -52,18 +56,44 @@ function AdminDashboard() {
       </header>
 
       <section className="mx-auto max-w-6xl px-6 py-10">
-        <div className="mb-8 flex items-center justify-between">
-          <div>
-            <h2 className="font-serif text-2xl font-bold">Fluxos de Quiz</h2>
-            <p className="text-sm text-muted-foreground">{flows.length} {flows.length === 1 ? "fluxo" : "fluxos"} cadastrado{flows.length === 1 ? "" : "s"}</p>
+        <div className="mb-8 flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-2 rounded-full border border-border bg-card p-1 shadow-sm">
+            <button
+              onClick={() => setActiveTab("flows")}
+              className={cn("rounded-full px-5 py-2 text-sm font-semibold transition", activeTab === "flows" ? "bg-primary text-primary-foreground shadow" : "text-muted-foreground hover:text-foreground")}
+            >
+              Fluxos
+            </button>
+            <button
+              onClick={() => setActiveTab("questions")}
+              className={cn("rounded-full px-5 py-2 text-sm font-semibold transition", activeTab === "questions" ? "bg-primary text-primary-foreground shadow" : "text-muted-foreground hover:text-foreground")}
+            >
+              Perguntas
+            </button>
+            <button
+              onClick={() => setActiveTab("palettes")}
+              className={cn("rounded-full px-5 py-2 text-sm font-semibold transition", activeTab === "palettes" ? "bg-primary text-primary-foreground shadow" : "text-muted-foreground hover:text-foreground")}
+            >
+              Paletas de Cores
+            </button>
           </div>
-          <button
-            onClick={() => navigate({ to: "/admin/flow/new" })}
-            className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition hover:opacity-90"
-          >
-            <Plus className="h-4 w-4" /> Criar Novo Fluxo
-          </button>
+          
+          {activeTab === "flows" && (
+            <button
+              onClick={() => navigate({ to: "/admin/flow/new" })}
+              className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition hover:opacity-90"
+            >
+              <Plus className="h-4 w-4" /> Criar Novo Fluxo
+            </button>
+          )}
         </div>
+
+        {activeTab === "flows" && (
+          <>
+            <div className="mb-6">
+              <h2 className="font-serif text-2xl font-bold">Fluxos de Quiz</h2>
+              <p className="text-sm text-muted-foreground">{flows.length} {flows.length === 1 ? "fluxo" : "fluxos"} cadastrado{flows.length === 1 ? "" : "s"}</p>
+            </div>
 
         {ready && flows.length === 0 && (
           <div className="rounded-3xl border-2 border-dashed border-border bg-card p-16 text-center">
@@ -145,6 +175,11 @@ function AdminDashboard() {
             );
           })}
         </div>
+          </>
+        )}
+
+        {activeTab === "questions" && <QuestionBank />}
+        {activeTab === "palettes" && <PaletteBank />}
       </section>
     </main>
   );

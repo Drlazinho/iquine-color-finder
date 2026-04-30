@@ -38,7 +38,19 @@ function Result() {
     setName(sessionStorage.getItem("iquine_user_name") || "");
   }, []);
 
-  const modeLabel = flow?.colorMode.type === "ano" ? "Cores do Ano" : "Todas as Cores do Catálogo";
+  useEffect(() => {
+    if (!ready || !flow) return;
+    if (flow.colorMode.type === "custom" && flow.customPalette && flow.customPalette.colors.length > 0) {
+      const paletteColors = flow.customPalette.colors;
+      setColor(paletteColors[Math.floor(Math.random() * paletteColors.length)]);
+    }
+  }, [ready, flow]);
+
+  const modeLabel = flow?.colorMode.type === "ano" 
+    ? "Cores do Ano" 
+    : flow?.colorMode.type === "custom" && flow.customPalette?.name 
+      ? flow.customPalette.name 
+      : "Todas as Cores do Catálogo";
 
   return (
     <main className="min-h-screen bg-iquine-cream">

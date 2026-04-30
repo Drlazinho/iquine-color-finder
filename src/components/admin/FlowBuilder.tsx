@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { ColorCatalogMode, QuizFlow, QuizOption, QuizQuestion } from "@/types";
+import { ColorCatalogMode, QuizFlow, QuizOption, QuizQuestion, ColorPalette } from "@/types";
 import { uid, useFlows } from "@/hooks/useFlows";
+import { useQuestions } from "@/hooks/useQuestions";
+import { usePalettes } from "@/hooks/usePalettes";
 import { IquineLogo } from "@/components/IquineLogo";
 import {
-  ArrowDown, ArrowUp, ChevronDown, ChevronUp, ImageIcon, Plus, Trash2, Upload, X,
+  ArrowDown, ArrowUp, ChevronDown, ChevronUp, ImageIcon, Plus, Trash2, Upload, X, Save, Download
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -19,8 +21,12 @@ export function FlowBuilder({ flowId }: { flowId?: string }) {
   const { getFlow, saveFlow, ready } = useFlows();
   const navigate = useNavigate();
 
+  const { saveQuestion, questions: bankQuestions } = useQuestions();
+  const { savePalette, palettes: bankPalettes } = usePalettes();
+
   const [name, setName] = useState("");
   const [colorMode, setColorMode] = useState<ColorCatalogMode>({ type: "ano" });
+  const [customPalette, setCustomPalette] = useState<ColorPalette>({ id: uid(), name: "", colors: [] });
   const [questions, setQuestions] = useState<QuizQuestion[]>([newQuestion()]);
   const [createdAt, setCreatedAt] = useState<string>("");
   const [isActive, setIsActive] = useState(false);
@@ -37,6 +43,7 @@ export function FlowBuilder({ flowId }: { flowId?: string }) {
       if (f) {
         setName(f.name);
         setColorMode(f.colorMode);
+        setCustomPalette(f.customPalette || { id: uid(), name: "", colors: [] });
         setQuestions(f.questions);
         setCreatedAt(f.createdAt);
         setIsActive(f.isActive);
@@ -107,6 +114,7 @@ export function FlowBuilder({ flowId }: { flowId?: string }) {
       createdAt: createdAt || new Date().toISOString(),
       questions,
       colorMode,
+      customPalette: colorMode.type === "custom" ? customPalette : undefined,
       isActive,
       activeFrom: activeFrom || undefined,
       activeTo: activeTo || undefined,
@@ -151,10 +159,11 @@ export function FlowBuilder({ flowId }: { flowId?: string }) {
 
           <div className="mt-6">
             <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Catálogo de cores</span>
-            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <div className="mt-3 grid gap-3 sm:grid-cols-3">
               {([
                 { type: "ano", label: "Cores do Ano", icon: "🎨", desc: "Paleta selecionada anualmente" },
                 { type: "catalogo", label: "Todas as Cores", icon: "📚", desc: "Catálogo completo Iquine" },
+                { type: "custom", label: "Paleta Customizada", icon: "✨", desc: "Crie sua própria seleção" },
               ] as const).map((m) => (
                 <button
                   key={m.type}
@@ -173,6 +182,82 @@ export function FlowBuilder({ flowId }: { flowId?: string }) {
                 </button>
               ))}
             </div>
+            {colorMode.type === "custom" && (
+              <div className="mt-6 rounded-2xl border border-border bg-secondary/30 p-5">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-sm font-bold">Cores da Paleta</h3>
+                  <div className="flex items-center gap-2">
+                    <select
+                      className="rounded-full border border-input bg-background px-3 py-1.5 text-xs outline-none"
+                      onChange={(e) => {
+                        const p = bankPalettes.find((x) => x.id === e.target.value);
+                        if (p) setCustomPalette({ ...p, id: uid() }); // Copy
+                        e.target.value = "";
+                      }}
+                    >
+                      <option value="">Importar Paleta...</option>
+                      {bankPalettes.map((p) => (
+                        <option key={p.id} value={p.id}>{p.name || "(Sem nome)"} ({p.colors.length} cores)</option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!customPalette.name.trim()) { alert("Dê um nome para a paleta antes de salvar."); return; }
+                        if (customPalette.colors.length === 0) { alert("Adicione pelo menos uma cor."); return; }
+                        savePalette({ ...customPalette, id: uid() });
+                        alert("Paleta salva no banco com sucesso!");
+                      }}
+                      className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary transition hover:bg-primary/20"
+                    >
+                      <Save className="h-3.5 w-3.5" /> Salvar no Banco
+                    </button>
+                  </div>
+                </div>
+                <input
+                  type="text"
+                  value={customPalette.name}
+                  onChange={(e) => setCustomPalette((p) => ({ ...p, name: e.target.value }))}
+                  placeholder="Nome da Paleta (ex.: Tons Terrosos)"
+                  className="mb-4 w-full rounded-xl border border-input bg-background px-4 py-2.5 text-sm outline-none focus:border-primary"
+                />
+                <div className="space-y-3">
+                  {customPalette.colors.map((c, i) => (
+                    <div key={c.id} className="flex items-center gap-3">
+                      <div className="h-10 w-10 shrink-0 overflow-hidden rounded-lg border border-border">
+                        <input
+                          type="color"
+                          value={c.hex}
+                          onChange={(e) => setCustomPalette((p) => ({ ...p, colors: p.colors.map((x) => x.id === c.id ? { ...x, hex: e.target.value } : x) }))}
+                          className="h-12 w-12 -translate-x-1 -translate-y-1 cursor-pointer"
+                        />
+                      </div>
+                      <input
+                        type="text"
+                        value={c.name}
+                        onChange={(e) => setCustomPalette((p) => ({ ...p, colors: p.colors.map((x) => x.id === c.id ? { ...x, name: e.target.value } : x) }))}
+                        placeholder="Nome da cor"
+                        className="flex-1 rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setCustomPalette((p) => ({ ...p, colors: p.colors.filter((x) => x.id !== c.id) }))}
+                        className="rounded-full p-2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => setCustomPalette((p) => ({ ...p, colors: [...p.colors, { id: uid(), name: "", hex: "#000000" }] }))}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-4 py-2 text-xs font-medium hover:bg-secondary"
+                  >
+                    <Plus className="h-3.5 w-3.5" /> Adicionar Cor
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </section>
 
@@ -197,17 +282,43 @@ export function FlowBuilder({ flowId }: { flowId?: string }) {
                 onAddOption={() => addOption(q.id)}
                 onUpdateOption={(oid, patch) => updateOption(q.id, oid, patch)}
                 onRemoveOption={(oid) => removeOption(q.id, oid)}
+                onSaveToBank={() => {
+                  if (!q.text.trim()) { alert("A pergunta precisa ter um texto para ser salva."); return; }
+                  saveQuestion({ ...q, id: uid() }); // save a copy
+                  alert("Pergunta salva no banco com sucesso!");
+                }}
               />
             ))}
           </div>
 
-          <button
-            type="button"
-            onClick={() => setQuestions((qs) => [...qs, newQuestion()])}
-            className="mt-4 inline-flex items-center gap-2 rounded-full border-2 border-dashed border-border px-5 py-2.5 text-sm font-medium text-muted-foreground transition hover:border-primary hover:text-foreground"
-          >
-            <Plus className="h-4 w-4" /> Adicionar Pergunta
-          </button>
+          <div className="mt-4 flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={() => setQuestions((qs) => [...qs, newQuestion()])}
+              className="inline-flex items-center gap-2 rounded-full border-2 border-dashed border-border px-5 py-2.5 text-sm font-medium text-muted-foreground transition hover:border-primary hover:text-foreground"
+            >
+              <Plus className="h-4 w-4" /> Adicionar Pergunta
+            </button>
+            <div className="relative flex items-center">
+              <select
+                className="absolute inset-0 opacity-0 cursor-pointer"
+                onChange={(e) => {
+                  const q = bankQuestions.find((x) => x.id === e.target.value);
+                  if (q) setQuestions((qs) => [...qs, { ...q, id: uid() }]);
+                  e.target.value = "";
+                }}
+                title="Importar do Banco"
+              >
+                <option value="">Selecione...</option>
+                {bankQuestions.map((q) => (
+                  <option key={q.id} value={q.id}>{q.text || "(Sem título)"}</option>
+                ))}
+              </select>
+              <div className="inline-flex items-center gap-2 rounded-full bg-secondary px-5 py-2.5 text-sm font-medium transition hover:bg-secondary/80 pointer-events-none">
+                <Download className="h-4 w-4" /> Importar do Banco
+              </div>
+            </div>
+          </div>
         </section>
 
         {/* Step 3 — Coleta de Dados (sempre incluído) */}
@@ -317,7 +428,7 @@ export function FlowBuilder({ flowId }: { flowId?: string }) {
 }
 
 function QuestionCard({
-  index, total, question, onChange, onRemove, onMove, onAddOption, onUpdateOption, onRemoveOption,
+  index, total, question, onChange, onRemove, onMove, onAddOption, onUpdateOption, onRemoveOption, onSaveToBank,
 }: {
   index: number;
   total: number;
@@ -328,6 +439,7 @@ function QuestionCard({
   onAddOption: () => void;
   onUpdateOption: (oid: string, p: Partial<QuizOption>) => void;
   onRemoveOption: (oid: string) => void;
+  onSaveToBank: () => void;
 }) {
   const [open, setOpen] = useState(true);
 
@@ -340,6 +452,7 @@ function QuestionCard({
         <span className="flex-1 truncate text-sm font-medium">
           {question.text || <span className="text-muted-foreground">Pergunta sem título</span>}
         </span>
+        <button onClick={onSaveToBank} className="rounded-full p-1.5 text-primary hover:bg-primary/10" aria-label="Salvar no Banco" title="Salvar no Banco"><Save className="h-3.5 w-3.5" /></button>
         <button onClick={() => onMove(-1)} disabled={index === 0} className="rounded-full p-1.5 text-muted-foreground hover:bg-secondary disabled:opacity-30" aria-label="Mover para cima"><ArrowUp className="h-3.5 w-3.5" /></button>
         <button onClick={() => onMove(1)} disabled={index === total - 1} className="rounded-full p-1.5 text-muted-foreground hover:bg-secondary disabled:opacity-30" aria-label="Mover para baixo"><ArrowDown className="h-3.5 w-3.5" /></button>
         <button onClick={() => setOpen(!open)} className="rounded-full p-1.5 text-muted-foreground hover:bg-secondary" aria-label="Expandir">
