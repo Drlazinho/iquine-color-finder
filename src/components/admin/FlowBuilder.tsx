@@ -8,7 +8,7 @@ import { IquineLogo } from "@/components/IquineLogo";
 import {
   ArrowDown, ArrowUp, ChevronDown, ChevronUp, ImageIcon, Plus, Trash2, Upload, X, Save, Download
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, compressImage } from "@/lib/utils";
 
 function newOption(): QuizOption {
   return { id: uid(), text: "" };
@@ -95,7 +95,7 @@ export function FlowBuilder({ flowId }: { flowId?: string }) {
     if (questions.length === 0) return "Adicione pelo menos uma pergunta.";
     for (const q of questions) {
       if (!q.text.trim()) return "Cada pergunta precisa de um texto.";
-      const filled = q.options.filter((o) => o.text.trim());
+      const filled = q.options.filter((o) => o.text.trim() || o.imageUrl);
       if (filled.length < 2) return `A pergunta "${q.text || "(sem título)"}" precisa de pelo menos 2 opções preenchidas.`;
     }
     return null;
@@ -287,7 +287,7 @@ export function FlowBuilder({ flowId }: { flowId?: string }) {
                 onRemoveOption={(oid) => removeOption(q.id, oid)}
                 onSaveToBank={() => {
                   if (!q.text.trim()) { alert("A pergunta precisa ter um texto para ser salva."); return; }
-                  const filled = q.options.filter((o) => o.text.trim());
+                  const filled = q.options.filter((o) => o.text.trim() || o.imageUrl);
                   if (filled.length < 2) { alert("Preencha pelo menos 2 alternativas antes de salvar no banco."); return; }
                   
                   const newId = uid();
@@ -524,10 +524,14 @@ function OptionRow({
   const fileRef = useRef<HTMLInputElement>(null);
   const [showUrl, setShowUrl] = useState(false);
 
-  const onPickFile = (file: File) => {
-    const reader = new FileReader();
-    reader.onload = () => onChange({ imageUrl: reader.result as string });
-    reader.readAsDataURL(file);
+  const onPickFile = async (file: File) => {
+    try {
+      const compressed = await compressImage(file, 600);
+      onChange({ imageUrl: compressed });
+    } catch (err) {
+      console.error(err);
+      alert("Erro ao processar imagem.");
+    }
   };
 
   return (
