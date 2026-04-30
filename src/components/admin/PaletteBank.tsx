@@ -1,10 +1,12 @@
 import { usePalettes } from "@/hooks/usePalettes";
-import { Palette, Trash2 } from "lucide-react";
+import { useFlows } from "@/hooks/useFlows";
+import { Palette, Trash2, List } from "lucide-react";
 
 export function PaletteBank() {
-  const { palettes, ready, deletePalette } = usePalettes();
+  const { palettes, ready: pReady, deletePalette } = usePalettes();
+  const { flows, ready: fReady } = useFlows();
 
-  if (!ready) return null;
+  if (!pReady || !fReady) return null;
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
@@ -62,6 +64,23 @@ export function PaletteBank() {
                   +{p.colors.length - 8}
                 </div>
               )}
+            </div>
+
+            <div className="mt-4 border-t border-border pt-4">
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Usada nos fluxos</p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {(() => {
+                  const usedInFlows = flows.filter(f => f.customPalette?.sourceBankId === p.id);
+                  if (usedInFlows.length === 0) {
+                    return <span className="text-xs text-muted-foreground italic">Nenhum fluxo utiliza esta paleta ainda.</span>;
+                  }
+                  return usedInFlows.map(f => (
+                    <span key={f.id} className="inline-flex items-center gap-1 rounded-full bg-secondary px-2.5 py-1 text-[10px] font-medium text-foreground">
+                      <List className="h-3 w-3" /> {f.name}
+                    </span>
+                  ));
+                })()}
+              </div>
             </div>
           </article>
         ))}

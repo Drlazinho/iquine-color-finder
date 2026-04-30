@@ -96,16 +96,17 @@ export function FlowBuilder({ flowId }: { flowId?: string }) {
     for (const q of questions) {
       if (!q.text.trim()) return "Cada pergunta precisa de um texto.";
       const filled = q.options.filter((o) => o.text.trim());
-      if (filled.length < 3) return `A pergunta "${q.text || "(sem título)"}" precisa de pelo menos 3 opções preenchidas.`;
+      if (filled.length < 2) return `A pergunta "${q.text || "(sem título)"}" precisa de pelo menos 2 opções preenchidas.`;
     }
     return null;
   };
 
   const onSave = () => {
     const err = validate();
-    if (err) { setError(err); return; }
+    if (err) { setError(err); alert(err); return; }
     if (activeFrom && activeTo && activeFrom > activeTo) {
       setError('A data inicial deve ser anterior à data final.');
+      alert('A data inicial deve ser anterior à data final.');
       return;
     }
     const flow: QuizFlow = {
@@ -191,7 +192,7 @@ export function FlowBuilder({ flowId }: { flowId?: string }) {
                       className="rounded-full border border-input bg-background px-3 py-1.5 text-xs outline-none"
                       onChange={(e) => {
                         const p = bankPalettes.find((x) => x.id === e.target.value);
-                        if (p) setCustomPalette({ ...p, id: uid() }); // Copy
+                        if (p) setCustomPalette({ ...p, id: uid(), sourceBankId: p.id }); // Copy
                         e.target.value = "";
                       }}
                     >
@@ -205,7 +206,9 @@ export function FlowBuilder({ flowId }: { flowId?: string }) {
                       onClick={() => {
                         if (!customPalette.name.trim()) { alert("Dê um nome para a paleta antes de salvar."); return; }
                         if (customPalette.colors.length === 0) { alert("Adicione pelo menos uma cor."); return; }
-                        savePalette({ ...customPalette, id: uid() });
+                        const newId = uid();
+                        savePalette({ ...customPalette, id: newId });
+                        setCustomPalette(p => ({ ...p, sourceBankId: newId }));
                         alert("Paleta salva no banco com sucesso!");
                       }}
                       className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary transition hover:bg-primary/20"
@@ -284,7 +287,12 @@ export function FlowBuilder({ flowId }: { flowId?: string }) {
                 onRemoveOption={(oid) => removeOption(q.id, oid)}
                 onSaveToBank={() => {
                   if (!q.text.trim()) { alert("A pergunta precisa ter um texto para ser salva."); return; }
-                  saveQuestion({ ...q, id: uid() }); // save a copy
+                  const filled = q.options.filter((o) => o.text.trim());
+                  if (filled.length < 2) { alert("Preencha pelo menos 2 alternativas antes de salvar no banco."); return; }
+                  
+                  const newId = uid();
+                  saveQuestion({ ...q, id: newId }); // save a copy
+                  updateQuestion(q.id, { sourceBankId: newId });
                   alert("Pergunta salva no banco com sucesso!");
                 }}
               />
@@ -304,7 +312,7 @@ export function FlowBuilder({ flowId }: { flowId?: string }) {
                 className="absolute inset-0 opacity-0 cursor-pointer"
                 onChange={(e) => {
                   const q = bankQuestions.find((x) => x.id === e.target.value);
-                  if (q) setQuestions((qs) => [...qs, { ...q, id: uid() }]);
+                  if (q) setQuestions((qs) => [...qs, { ...q, id: uid(), sourceBankId: q.id }]);
                   e.target.value = "";
                 }}
                 title="Importar do Banco"
@@ -475,7 +483,7 @@ function QuestionCard({
 
           <div>
             <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Opções ({question.options.length}/8) · mínimo 3
+              Opções ({question.options.length}/8) · mínimo 2
             </p>
             <div className="space-y-2">
               {question.options.map((opt, i) => (
@@ -483,7 +491,7 @@ function QuestionCard({
                   key={opt.id}
                   index={i}
                   option={opt}
-                  canRemove={question.options.length > 3}
+                  canRemove={question.options.length > 2}
                   onChange={(p) => onUpdateOption(opt.id, p)}
                   onRemove={() => onRemoveOption(opt.id)}
                 />

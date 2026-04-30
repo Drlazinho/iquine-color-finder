@@ -8,12 +8,14 @@ export interface QuizQuestion {
   id: string;
   text: string;
   options: QuizOption[];
+  sourceBankId?: string;
 }
 
 export interface ColorPalette {
   id: string;
   name: string;
   colors: { id: string; name: string; hex: string }[];
+  sourceBankId?: string;
 }
 
 export interface ColorCatalogMode {

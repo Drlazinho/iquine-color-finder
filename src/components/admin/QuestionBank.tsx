@@ -1,10 +1,12 @@
 import { useQuestions } from "@/hooks/useQuestions";
-import { HelpCircle, Trash2 } from "lucide-react";
+import { useFlows } from "@/hooks/useFlows";
+import { HelpCircle, Trash2, List } from "lucide-react";
 
 export function QuestionBank() {
-  const { questions, ready, deleteQuestion } = useQuestions();
+  const { questions, ready: qReady, deleteQuestion } = useQuestions();
+  const { flows, ready: fReady } = useFlows();
 
-  if (!ready) return null;
+  if (!qReady || !fReady) return null;
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
@@ -44,9 +46,35 @@ export function QuestionBank() {
               </button>
             </div>
             <h3 className="mt-4 font-serif text-lg font-semibold leading-tight">{q.text || "(Sem título)"}</h3>
-            <p className="mt-1 text-xs text-muted-foreground">
-              {q.options.length} {q.options.length === 1 ? "opção" : "opções"}
-            </p>
+            
+            <div className="mt-4 space-y-2">
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Alternativas</p>
+              <ul className="space-y-1">
+                {q.options.map((opt, i) => (
+                  <li key={opt.id} className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-secondary text-[10px] font-bold">{i + 1}</span>
+                    <span className="truncate">{opt.text || "(vazia)"}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="mt-4 border-t border-border pt-4">
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Usada nos fluxos</p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {(() => {
+                  const usedInFlows = flows.filter(f => f.questions.some(fq => fq.sourceBankId === q.id));
+                  if (usedInFlows.length === 0) {
+                    return <span className="text-xs text-muted-foreground italic">Nenhum fluxo utiliza esta pergunta ainda.</span>;
+                  }
+                  return usedInFlows.map(f => (
+                    <span key={f.id} className="inline-flex items-center gap-1 rounded-full bg-secondary px-2.5 py-1 text-[10px] font-medium text-foreground">
+                      <List className="h-3 w-3" /> {f.name}
+                    </span>
+                  ));
+                })()}
+              </div>
+            </div>
           </article>
         ))}
       </div>
