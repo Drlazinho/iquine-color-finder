@@ -1,80 +1,87 @@
-import { useEffect, useRef, useState } from "react";
-import { Link, useNavigate } from "@tanstack/react-router";
-import { ColorCatalogMode, QuizFlow, QuizOption, QuizQuestion, ColorPalette } from "@/types";
-import { uid, useFlows } from "@/hooks/useFlows";
-import { useQuestions } from "@/hooks/useQuestions";
-import { usePalettes } from "@/hooks/usePalettes";
-import { IquineLogo } from "@/components/IquineLogo";
+import { useEffect, useRef, useState } from "react"
+import { Link, useNavigate } from "@tanstack/react-router"
+import { ColorCatalogMode, QuizFlow, QuizOption, QuizQuestion, ColorPalette } from "@/types"
+import { uid, useFlows } from "@/hooks/useFlows"
+import { useQuestions } from "@/hooks/useQuestions"
+import { usePalettes } from "@/hooks/usePalettes"
+import { IquineLogo } from "@/components/IquineLogo"
 import {
   ArrowDown, ArrowUp, ChevronDown, ChevronUp, ImageIcon, Plus, Trash2, Upload, X, Save, Download
-} from "lucide-react";
-import { cn, compressImage } from "@/lib/utils";
+} from "lucide-react"
+import { cn, compressImage } from "@/lib/utils"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 function newOption(): QuizOption {
-  return { id: uid(), text: "" };
+  return { id: uid(), text: "" }
 }
 function newQuestion(): QuizQuestion {
-  return { id: uid(), text: "", options: [newOption(), newOption(), newOption()] };
+  return { id: uid(), text: "", options: [newOption(), newOption(), newOption()] }
 }
 
 export function FlowBuilder({ flowId }: { flowId?: string }) {
-  const { getFlow, saveFlow, ready } = useFlows();
-  const navigate = useNavigate();
+  const { getFlow, saveFlow, ready } = useFlows()
+  const navigate = useNavigate()
 
-  const { saveQuestion, questions: bankQuestions } = useQuestions();
-  const { savePalette, palettes: bankPalettes } = usePalettes();
+  const { saveQuestion, questions: bankQuestions } = useQuestions()
+  const { savePalette, palettes: bankPalettes } = usePalettes()
 
-  const [name, setName] = useState("");
-  const [colorMode, setColorMode] = useState<ColorCatalogMode>({ type: "ano" });
-  const [customPalette, setCustomPalette] = useState<ColorPalette>({ id: uid(), name: "", colors: [] });
-  const [questions, setQuestions] = useState<QuizQuestion[]>([newQuestion()]);
-  const [createdAt, setCreatedAt] = useState<string>("");
-  const [isActive, setIsActive] = useState(false);
-  const [activeFrom, setActiveFrom] = useState<string>("");
-  const [activeTo, setActiveTo] = useState<string>("");
-  const [error, setError] = useState("");
-  const loaded = useRef(false);
+  const [name, setName] = useState("")
+  const [colorMode, setColorMode] = useState<ColorCatalogMode>({ type: "ano" })
+  const [customPalette, setCustomPalette] = useState<ColorPalette>({ id: uid(), name: "", colors: [] })
+  const [questions, setQuestions] = useState<QuizQuestion[]>([newQuestion()])
+  const [createdAt, setCreatedAt] = useState<string>("")
+  const [isActive, setIsActive] = useState(false)
+  const [activeFrom, setActiveFrom] = useState<string>("")
+  const [activeTo, setActiveTo] = useState<string>("")
+  const [error, setError] = useState("")
+  const loaded = useRef(false)
 
   useEffect(() => {
-    if (!ready || loaded.current) return;
-    loaded.current = true;
+    if (!ready || loaded.current) return
+    loaded.current = true
     if (flowId) {
-      const f = getFlow(flowId);
+      const f = getFlow(flowId)
       if (f) {
-        setName(f.name);
-        setColorMode(f.colorMode);
-        setCustomPalette(f.customPalette || { id: uid(), name: "", colors: [] });
-        setQuestions(f.questions);
-        setCreatedAt(f.createdAt);
-        setIsActive(f.isActive);
-        setActiveFrom(f.activeFrom || "");
-        setActiveTo(f.activeTo || "");
+        setName(f.name)
+        setColorMode(f.colorMode)
+        setCustomPalette(f.customPalette || { id: uid(), name: "", colors: [] })
+        setQuestions(f.questions)
+        setCreatedAt(f.createdAt)
+        setIsActive(f.isActive)
+        setActiveFrom(f.activeFrom || "")
+        setActiveTo(f.activeTo || "")
       }
     }
-  }, [ready, flowId, getFlow]);
+  }, [ready, flowId, getFlow])
 
   const updateQuestion = (id: string, patch: Partial<QuizQuestion>) =>
-    setQuestions((qs) => qs.map((q) => (q.id === id ? { ...q, ...patch } : q)));
+    setQuestions((qs) => qs.map((q) => (q.id === id ? { ...q, ...patch } : q)))
 
   const removeQuestion = (id: string) =>
-    setQuestions((qs) => qs.filter((q) => q.id !== id));
+    setQuestions((qs) => qs.filter((q) => q.id !== id))
 
   const moveQuestion = (idx: number, dir: -1 | 1) => {
     setQuestions((qs) => {
-      const next = [...qs];
-      const target = idx + dir;
+      const next = [...qs]
+      const target = idx + dir
       if (target < 0 || target >= next.length) return qs;
-      [next[idx], next[target]] = [next[target], next[idx]];
-      return next;
-    });
-  };
+      [next[idx], next[target]] = [next[target], next[idx]]
+      return next
+    })
+  }
 
   const addOption = (qid: string) =>
     setQuestions((qs) =>
       qs.map((q) =>
         q.id === qid && q.options.length < 8 ? { ...q, options: [...q.options, newOption()] } : q,
       ),
-    );
+    )
 
   const updateOption = (qid: string, oid: string, patch: Partial<QuizOption>) =>
     setQuestions((qs) =>
@@ -83,31 +90,31 @@ export function FlowBuilder({ flowId }: { flowId?: string }) {
           ? { ...q, options: q.options.map((o) => (o.id === oid ? { ...o, ...patch } : o)) }
           : q,
       ),
-    );
+    )
 
   const removeOption = (qid: string, oid: string) =>
     setQuestions((qs) =>
       qs.map((q) => (q.id === qid ? { ...q, options: q.options.filter((o) => o.id !== oid) } : q)),
-    );
+    )
 
   const validate = (): string | null => {
-    if (!name.trim()) return "Dê um nome ao fluxo.";
-    if (questions.length === 0) return "Adicione pelo menos uma pergunta.";
+    if (!name.trim()) return "Dê um nome ao fluxo."
+    if (questions.length === 0) return "Adicione pelo menos uma pergunta."
     for (const q of questions) {
-      if (!q.text.trim()) return "Cada pergunta precisa de um texto.";
-      const filled = q.options.filter((o) => o.text.trim() || o.imageUrl);
-      if (filled.length < 2) return `A pergunta "${q.text || "(sem título)"}" precisa de pelo menos 2 opções preenchidas.`;
+      if (!q.text.trim()) return "Cada pergunta precisa de um texto."
+      const filled = q.options.filter((o) => o.text.trim() || o.imageUrl)
+      if (filled.length < 2) return `A pergunta "${q.text || "(sem título)"}" precisa de pelo menos 2 opções preenchidas.`
     }
-    return null;
-  };
+    return null
+  }
 
   const onSave = () => {
-    const err = validate();
-    if (err) { setError(err); alert(err); return; }
+    const err = validate()
+    if (err) { setError(err); alert(err); return }
     if (activeFrom && activeTo && activeFrom > activeTo) {
-      setError('A data inicial deve ser anterior à data final.');
-      alert('A data inicial deve ser anterior à data final.');
-      return;
+      setError('A data inicial deve ser anterior à data final.')
+      alert('A data inicial deve ser anterior à data final.')
+      return
     }
     const flow: QuizFlow = {
       id: flowId || uid(),
@@ -119,10 +126,10 @@ export function FlowBuilder({ flowId }: { flowId?: string }) {
       isActive,
       activeFrom: activeFrom || undefined,
       activeTo: activeTo || undefined,
-    };
-    saveFlow(flow);
-    navigate({ to: "/admin" });
-  };
+    }
+    saveFlow(flow)
+    navigate({ to: "/admin" })
+  }
 
   return (
     <main className="min-h-screen bg-background pb-32">
@@ -162,7 +169,7 @@ export function FlowBuilder({ flowId }: { flowId?: string }) {
             <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Catálogo de cores</span>
             <div className="mt-3 grid gap-3 sm:grid-cols-3">
               {([
-                { type: "ano", label: "Cores do Ano", icon: "🎨", desc: "Paleta selecionada anualmente" },
+                // { type: "ano", label: "Cores do Ano", icon: "🎨", desc: "Paleta selecionada anualmente" },
                 { type: "catalogo", label: "Todas as Cores", icon: "📚", desc: "Catálogo completo Iquine" },
                 { type: "custom", label: "Paleta Customizada", icon: "✨", desc: "Crie sua própria seleção" },
               ] as const).map((m) => (
@@ -188,28 +195,42 @@ export function FlowBuilder({ flowId }: { flowId?: string }) {
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-sm font-bold">Cores da Paleta</h3>
                   <div className="flex items-center gap-2">
-                    <select
-                      className="rounded-full border border-input bg-background px-3 py-1.5 text-xs outline-none"
-                      onChange={(e) => {
-                        const p = bankPalettes.find((x) => x.id === e.target.value);
-                        if (p) setCustomPalette({ ...p, id: uid(), sourceBankId: p.id }); // Copy
-                        e.target.value = "";
+                    <Select
+                      value={undefined}
+                      onValueChange={(val) => {
+                        if (!val) return
+                        const p = bankPalettes.find((x) => x.id === val)
+                        if (p) setCustomPalette({ ...p, id: uid(), sourceBankId: p.id }) // Copy
                       }}
                     >
-                      <option value="">Importar Paleta...</option>
-                      {bankPalettes.map((p) => (
-                        <option key={p.id} value={p.id}>{p.name || "(Sem nome)"} ({p.colors.length} cores)</option>
-                      ))}
-                    </select>
+                      <SelectTrigger className="h-8 w-[220px] rounded-full border border-input bg-background px-3 py-1.5 text-xs outline-none">
+                        <SelectValue placeholder="Importar Paleta..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {bankPalettes.map((p) => (
+                          <SelectItem key={p.id} value={p.id}>
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium">{p.name || "(Sem nome)"}</span>
+                              <div className="flex items-center gap-0.5">
+                                {p.colors.slice(0, 4).map(c => (
+                                  <div key={c.id} className="h-3 w-3 rounded-full border border-black/10 shadow-sm" style={{ backgroundColor: c.hex }} />
+                                ))}
+                                {p.colors.length > 4 && <span className="text-[10px] text-muted-foreground font-medium ml-0.5">+{p.colors.length - 4}</span>}
+                              </div>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <button
                       type="button"
                       onClick={() => {
-                        if (!customPalette.name.trim()) { alert("Dê um nome para a paleta antes de salvar."); return; }
-                        if (customPalette.colors.length === 0) { alert("Adicione pelo menos uma cor."); return; }
-                        const newId = uid();
-                        savePalette({ ...customPalette, id: newId });
-                        setCustomPalette(p => ({ ...p, sourceBankId: newId }));
-                        alert("Paleta salva no banco com sucesso!");
+                        if (!customPalette.name.trim()) { alert("Dê um nome para a paleta antes de salvar."); return }
+                        if (customPalette.colors.length === 0) { alert("Adicione pelo menos uma cor."); return }
+                        const newId = uid()
+                        savePalette({ ...customPalette, id: newId })
+                        setCustomPalette(p => ({ ...p, sourceBankId: newId }))
+                        alert("Paleta salva no banco com sucesso!")
                       }}
                       className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary transition hover:bg-primary/20"
                     >
@@ -286,14 +307,14 @@ export function FlowBuilder({ flowId }: { flowId?: string }) {
                 onUpdateOption={(oid, patch) => updateOption(q.id, oid, patch)}
                 onRemoveOption={(oid) => removeOption(q.id, oid)}
                 onSaveToBank={() => {
-                  if (!q.text.trim()) { alert("A pergunta precisa ter um texto para ser salva."); return; }
-                  const filled = q.options.filter((o) => o.text.trim() || o.imageUrl);
-                  if (filled.length < 2) { alert("Preencha pelo menos 2 alternativas antes de salvar no banco."); return; }
-                  
-                  const newId = uid();
-                  saveQuestion({ ...q, id: newId }); // save a copy
-                  updateQuestion(q.id, { sourceBankId: newId });
-                  alert("Pergunta salva no banco com sucesso!");
+                  if (!q.text.trim()) { alert("A pergunta precisa ter um texto para ser salva."); return }
+                  const filled = q.options.filter((o) => o.text.trim() || o.imageUrl)
+                  if (filled.length < 2) { alert("Preencha pelo menos 2 alternativas antes de salvar no banco."); return }
+
+                  const newId = uid()
+                  saveQuestion({ ...q, id: newId }) // save a copy
+                  updateQuestion(q.id, { sourceBankId: newId })
+                  alert("Pergunta salva no banco com sucesso!")
                 }}
               />
             ))}
@@ -308,23 +329,29 @@ export function FlowBuilder({ flowId }: { flowId?: string }) {
               <Plus className="h-4 w-4" /> Adicionar Pergunta
             </button>
             <div className="relative flex items-center">
-              <select
-                className="absolute inset-0 opacity-0 cursor-pointer"
-                onChange={(e) => {
-                  const q = bankQuestions.find((x) => x.id === e.target.value);
-                  if (q) setQuestions((qs) => [...qs, { ...q, id: uid(), sourceBankId: q.id }]);
-                  e.target.value = "";
+              <Select
+                value={undefined}
+                onValueChange={(val) => {
+                  if (!val) return
+                  const q = bankQuestions.find((x) => x.id === val)
+                  if (q) setQuestions((qs) => [...qs, { ...q, id: uid(), sourceBankId: q.id }])
                 }}
-                title="Importar do Banco"
               >
-                <option value="">Selecione...</option>
-                {bankQuestions.map((q) => (
-                  <option key={q.id} value={q.id}>{q.text || "(Sem título)"}</option>
-                ))}
-              </select>
-              <div className="inline-flex items-center gap-2 rounded-full bg-secondary px-5 py-2.5 text-sm font-medium transition hover:bg-secondary/80 pointer-events-none">
-                <Download className="h-4 w-4" /> Importar do Banco
-              </div>
+                <SelectTrigger className="inline-flex h-auto w-auto items-center gap-2 rounded-full border-0 bg-secondary px-5 py-2.5 text-sm font-medium transition hover:bg-secondary/80 focus:ring-0 focus:ring-offset-0 [&>svg]:hidden">
+                  <Download className="h-4 w-4" />
+                  <SelectValue placeholder="Importar do Banco" />
+                </SelectTrigger>
+                <SelectContent>
+                  {bankQuestions.map((q) => (
+                    <SelectItem key={q.id} value={q.id} className="max-w-[400px]">
+                      <div className="flex flex-col py-0.5">
+                        <span className="truncate font-medium">{q.text || "(Sem título)"}</span>
+                        <span className="text-xs text-muted-foreground">{q.options.length} {q.options.length === 1 ? "alternativa" : "alternativas"}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </section>
@@ -432,24 +459,24 @@ export function FlowBuilder({ flowId }: { flowId?: string }) {
         </div>
       </div>
     </main>
-  );
+  )
 }
 
 function QuestionCard({
   index, total, question, onChange, onRemove, onMove, onAddOption, onUpdateOption, onRemoveOption, onSaveToBank,
 }: {
-  index: number;
-  total: number;
-  question: QuizQuestion;
-  onChange: (p: Partial<QuizQuestion>) => void;
-  onRemove: () => void;
-  onMove: (dir: -1 | 1) => void;
-  onAddOption: () => void;
-  onUpdateOption: (oid: string, p: Partial<QuizOption>) => void;
-  onRemoveOption: (oid: string) => void;
-  onSaveToBank: () => void;
+  index: number
+  total: number
+  question: QuizQuestion
+  onChange: (p: Partial<QuizQuestion>) => void
+  onRemove: () => void
+  onMove: (dir: -1 | 1) => void
+  onAddOption: () => void
+  onUpdateOption: (oid: string, p: Partial<QuizOption>) => void
+  onRemoveOption: (oid: string) => void
+  onSaveToBank: () => void
 }) {
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(true)
 
   return (
     <div className="rounded-2xl border border-border bg-background">
@@ -509,30 +536,30 @@ function QuestionCard({
         </div>
       )}
     </div>
-  );
+  )
 }
 
 function OptionRow({
   index, option, canRemove, onChange, onRemove,
 }: {
-  index: number;
-  option: QuizOption;
-  canRemove: boolean;
-  onChange: (p: Partial<QuizOption>) => void;
-  onRemove: () => void;
+  index: number
+  option: QuizOption
+  canRemove: boolean
+  onChange: (p: Partial<QuizOption>) => void
+  onRemove: () => void
 }) {
-  const fileRef = useRef<HTMLInputElement>(null);
-  const [showUrl, setShowUrl] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null)
+  const [showUrl, setShowUrl] = useState(false)
 
   const onPickFile = async (file: File) => {
     try {
-      const compressed = await compressImage(file, 600);
-      onChange({ imageUrl: compressed });
+      const compressed = await compressImage(file, 600)
+      onChange({ imageUrl: compressed })
     } catch (err) {
-      console.error(err);
-      alert("Erro ao processar imagem.");
+      console.error(err)
+      alert("Erro ao processar imagem.")
     }
-  };
+  }
 
   return (
     <div className="rounded-xl border border-border bg-card p-3">
@@ -575,7 +602,7 @@ function OptionRow({
               type="file"
               accept="image/*"
               className="hidden"
-              onChange={(e) => { const f = e.target.files?.[0]; if (f) onPickFile(f); e.target.value = ""; }}
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) onPickFile(f); e.target.value = "" }}
             />
             <button
               type="button"
@@ -606,5 +633,5 @@ function OptionRow({
         </button>
       </div>
     </div>
-  );
+  )
 }
